@@ -1,3 +1,5 @@
+# copypaste from https://pymotw.com/2/select/
+
 import select, socket, sys
 import multiprocessing
 import queue
@@ -16,16 +18,19 @@ while inputs:
     for s in readable:
         if s is server:
             connection, client_address = s.accept()
+            print ('new connection from', client_address)
             connection.setblocking(0)
             inputs.append(connection)
             message_queues[connection] = queue.Queue()
         else:
             data = s.recv(1024)
             if data:
+                print ('received "%s" from %s' % (data, s.getpeername()))
                 message_queues[s].put(data)
                 if s not in outputs:
                     outputs.append(s)
             else:
+                print ('closing', client_address, 'after reading no data')
                 if s in outputs:
                     outputs.remove(s)
                 inputs.remove(s)
