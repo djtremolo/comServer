@@ -1,7 +1,7 @@
 # copypaste from https://pymotw.com/2/select/
 
 import select, socket, sys
-import multiprocessing
+#import multiprocessing
 import queue
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -11,6 +11,50 @@ server.listen(5)
 inputs = [server]
 outputs = []
 message_queues = {}
+
+pairs = dict()
+
+
+
+def pairIsValid(key):
+    if (key in pairs):
+        print("checking pair %s" % pairs[key])
+        if(len(pairs[key])>1):
+            return True
+    return False
+
+
+
+def createPair(sock, key):
+    if(key not in pairs):        
+        pairs[key] = [sock]
+    else:
+        if(len(pairs[key]) == 1):
+            pairs[key].append(sock)
+
+def removeSocketFromPair(sock, key):
+    if(key in pairs):
+        if(sock in pairs[key]):
+            pairs[key].remove(sock)
+
+
+def forwardMessage(msg, sourceSock, key):
+    if(pairIsValid(key)):
+        for s in pairs[key]:
+            if(s != sourceSock):
+
+                print ('forwarding "%s" from %s to %s' % (msg, sourceSock.getpeername(), s.getpeername()))
+
+                message_queues[s].put(msg)
+                if s not in outputs:
+                    outputs.append(s)
+
+
+
+
+#def handlePair(newSock)
+#    if newsock
+
 
 while inputs:
     readable, writable, exceptional = select.select(
@@ -22,15 +66,22 @@ while inputs:
             connection.setblocking(0)
             inputs.append(connection)
             message_queues[connection] = queue.Queue()
+
+            createPair(connection, "12345678")
+#            createPair(connection, "wjkerjhkjwer")
         else:
             data = s.recv(1024)
             if data:
                 print ('received "%s" from %s' % (data, s.getpeername()))
-                message_queues[s].put(data)
-                if s not in outputs:
-                    outputs.append(s)
+                forwardMessage(data, s, "12345678")
+#                message_queues[s].put(data)
+#                if s not in outputs:
+#                    outputs.append(s)
             else:
                 print ('closing', client_address, 'after reading no data')
+
+                removeSocketFromPair(s, "12345678")
+
                 if s in outputs:
                     outputs.remove(s)
                 inputs.remove(s)
