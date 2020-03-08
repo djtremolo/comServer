@@ -35,7 +35,11 @@ def createPair(sock, key):
 def removeSocketFromPair(sock, key):
     if(key in pairs):
         if(sock in pairs[key]):
+            print("removed %s from pair" % sock)
             pairs[key].remove(sock)
+            if(len(pair[key]) == 0):
+                print("removed '%s' pair completely" % key)
+                del pairs[key]
 
 
 def forwardMessage(msg, sourceSock, key):
